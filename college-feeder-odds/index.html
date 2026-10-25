@@ -269,6 +269,49 @@ input:disabled{opacity:.5}
     </div>
   </section>
 
+  <section id="uc">
+    <span class="eyebrow">Fremont, CA · University of California</span>
+    <h2>UC odds: BIF vs. Washington High</h2>
+    <p class="lede" style="font-size:.88rem">UC is test-blind, so the top-SAT assumption buys nothing here. UC reads GPA and course rigor against what each high school offers, which makes class standing matter even more than it does at the Ivies.</p>
+    <div class="tbl"><table style="min-width:600px"><thead><tr><th>Fall 2025</th><th>BIF</th><th>Washington HS</th></tr></thead><tbody>
+      <tr><td>UC applicants</td><td>not published</td><td>186 of ≈470 seniors</td></tr>
+      <tr><td>Admitted to any UC</td><td>not published</td><td>164 (88% of applicants)</td></tr>
+      <tr><td>Berkeley admits / applicants</td><td class="e">≈15–35 per 100 seniors (est.)</td><td>13 / 142 (9.2%); 12 enrolled</td></tr>
+      <tr><td>UCLA admits / applicants</td><td class="e">≈10–25 per 100 seniors (est.)</td><td>14 / 139 (10.1%); 6 enrolled</td></tr>
+      <tr><td>Top-6 UC admits per 100 seniors*</td><td>212 (#1 small private school)</td><td>not listed; Berkeley + UCLA alone = 5.7</td></tr>
+      <tr><td>Campuses with acceptances</td><td>all 9 undergrad campuses (’25)</td><td>—</td></tr>
+    </tbody></table></div>
+    <p class="lede" style="font-size:.78rem">*highschoolreach.com score: admits to Berkeley, UCLA, San Diego, Santa Barbara, Irvine and Davis, summed across campuses, per 100 seniors. Nearby context: Mission San Jose 70 (Berkeley 43 / 316 applicants), American High 68, Irvington (Berkeley 31 / 319). BIF's Berkeley and UCLA rates are estimated by applying Mission San Jose's campus mix (Berkeley ≈14%, UCLA ≈8% of top-6 admits) to BIF's 212, then widened.</p>
+
+    <div class="panel" style="display:flex;flex-direction:column;gap:14px">
+      <div class="controls">
+        <div class="seg" role="group" aria-label="Campus" id="uCamp">
+          <button data-v="ucb" aria-pressed="true">UC Berkeley</button>
+          <button data-v="ucla" aria-pressed="false">UCLA</button>
+        </div>
+        <label class="chk"><input type="checkbox" id="uLink" checked> Same student (map BIF rank to WHS rank)</label>
+      </div>
+      <div class="two">
+        <div class="field"><label for="uBif">Percentile in BIF class: <span class="mono" id="uBifV"></span></label>
+          <input type="range" id="uBif" min="0" max="99" step="1" value="60"></div>
+        <div class="field"><label for="uWhs">Percentile in WHS class: <span class="mono" id="uWhsV"></span></label>
+          <input type="range" id="uWhs" min="0" max="99.5" step="0.5" value="96">
+          <span class="hint" id="uWhsHint"></span></div>
+      </div>
+      <div class="fcards" id="uCards"></div>
+      <div style="overflow-x:auto"><svg id="uChart" viewBox="0 0 640 250" role="img" aria-label="UC admit odds by percentile for both schools" style="width:100%;min-width:420px;height:auto;display:block"></svg></div>
+      <div class="legend"><span><i style="background:var(--priv)"></i>BIF</span><span><i style="background:var(--pub)"></i>Washington HS</span><span>Shaded band = low to high rate estimate</span></div>
+    </div>
+    <div class="notes">
+      <ul>
+        <li><b>Curves</b> use the same logistic form as above. Washington is calibrated to its official per-senior rates (Berkeley ≈2.8%, UCLA ≈3.0%) with admits concentrated in roughly the top 3–5%. BIF is calibrated to the estimated rates, spread across roughly the top third of the class.</li>
+        <li><b>Ceiling:</b> even a top-of-class student is not a lock at Berkeley or UCLA. Ceilings are about 60% (WHS) and 70% (BIF) at the very top.</li>
+        <li><b>Eligibility in the Local Context:</b> the top 9% of a participating California high school is guaranteed a place somewhere in the UC system, usually via referral, not at Berkeley or UCLA.</li>
+        <li><b>Confidence ceilings:</b> 70 for Washington (official UC counts, one year), 30 for BIF (no per-campus data at all).</li>
+      </ul>
+    </div>
+  </section>
+
   <section>
     <h2>How much is admissions advantage?</h2>
     <div class="panel" style="display:flex;flex-direction:column;gap:12px">
@@ -567,6 +610,67 @@ segBind("fOut",v=>fOut=v);segBind("fMeas",v=>fMeas=v);
 ["fBif","fWhs"].forEach(id=>document.getElementById(id).addEventListener("input",renderFremont));
 document.getElementById("fLink").onchange=renderFremont;
 renderFremont();
+
+// ---- UC section ----
+const US={
+ bif:{name:"BIF",color:"var(--priv)",ceil:30,
+   ucb:{R:[.15,.25,.35],A:.70,w:.06}, ucla:{R:[.10,.17,.25],A:.65,w:.06}},
+ whs:{name:"Washington HS",color:"var(--pub)",ceil:70,
+   ucb:{R:[.022,.028,.035],A:.60,w:.02}, ucla:{R:[.024,.030,.037],A:.55,w:.02}}
+};
+let uCamp="ucb";
+function uEval(s,p){
+  const c=US[s][uCamp];
+  const v=c.R.map(R=>curve(R,c.A,c.w)(p));
+  const lo=Math.min(v[0],v[2]), hi=Math.max(v[0],v[2]);
+  const score=Math.max(0,Math.min(US[s].ceil,Math.round(100*(1-(hi-lo)/(hi+lo+1e-9)))));
+  return {mid:v[1],lo,hi,score};
+}
+function drawCompare(svgId,cfg,ev,pb,pw,x0){
+  const W=640,H=250,L=44,R=14,T=14,B=36;
+  const X=p=>L+(p-x0)/(1-x0)*(W-L-R);
+  let ymax=0;const pts={};
+  ["bif","whs"].forEach(s=>{pts[s]=[];for(let i=0;i<=200;i++){const p=x0+(1-x0)*i/200;const r=ev(s,Math.min(p,.999));pts[s].push([p,r]);ymax=Math.max(ymax,r.hi);}});
+  ymax=Math.max(.1,Math.ceil(ymax*10)/10);
+  const Y=v=>T+(1-v/ymax)*(H-T-B);
+  let g="";
+  for(let k=0;k<=4;k++){const v=ymax*k/4;g+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${Y(v)+4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="IBM Plex Mono,monospace">${fmt(v*100,0)}%</text>`;}
+  for(let k=0;k<=5;k++){const t=x0+(1-x0)*k/5;g+=`<text x="${X(t)}" y="${H-B+16}" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="IBM Plex Mono,monospace">${fmt(t*100,0)}</text>`;}
+  g+=`<text x="${(L+W-R)/2}" y="${H-4}" text-anchor="middle" font-size="11" fill="var(--muted)">Percentile within own class</text>`;
+  ["whs","bif"].forEach(s=>{
+    const P=pts[s], c=cfg[s].color;
+    g+=`<polygon points="${P.map(([p,r])=>`${X(p)},${Y(r.hi)}`).join(" ")} ${P.slice().reverse().map(([p,r])=>`${X(p)},${Y(r.lo)}`).join(" ")}" fill="${c}" fill-opacity=".15"/>`;
+    g+=`<polyline points="${P.map(([p,r])=>`${X(p)},${Y(r.mid)}`).join(" ")}" fill="none" stroke="${c}" stroke-width="2.2"/>`;
+  });
+  [["bif",pb],["whs",pw]].forEach(([s,p])=>{if(p<x0)return;const r=ev(s,p);g+=`<line x1="${X(p)}" x2="${X(p)}" y1="${T}" y2="${H-B}" stroke="${cfg[s].color}" stroke-dasharray="3 3" stroke-opacity=".6"/><circle cx="${X(p)}" cy="${Y(r.mid)}" r="5.5" fill="${cfg[s].color}" stroke="var(--surface)" stroke-width="2"/>`;});
+  document.getElementById(svgId).innerHTML=g;
+}
+function renderUC(){
+  const link=document.getElementById("uLink").checked;
+  const bEl=document.getElementById("uBif"), wEl=document.getElementById("uWhs");
+  const pb=+bEl.value/100;
+  if(link) wEl.value=Math.min(99.5,Math.round(mapWhs(pb)*200)/2);
+  wEl.disabled=link;
+  const pw=+wEl.value/100;
+  document.getElementById("uBifV").textContent=fmt(pb*100,0)+"th · top "+fmt((1-pb)*100,0)+"%";
+  document.getElementById("uWhsV").textContent=fmt(pw*100,1)+"th · top "+fmt((1-pw)*100,1)+"%";
+  document.getElementById("uWhsHint").textContent=link?"Set by the same-student mapping. Untick the box to move it yourself.":"Set manually.";
+  const b=uEval("bif",pb), w=uEval("whs",pw);
+  const lab=(uCamp==="ucb"?"UC Berkeley":"UCLA")+" acceptance";
+  const card=(s,r,p,win)=>`<div class="fcard${win?" win":""}">
+    <span class="eyebrow" style="color:${US[s].color}">${US[s].name} · ${fmt(p*100,s==="whs"?1:0)}th percentile${win?" · higher":""}</span>
+    <span class="big">${pctTxt(r.mid)}</span>
+    <span class="sub">${lab} · range ${pctTxt(r.lo)}–${pctTxt(r.hi)}</span>
+    <div style="display:flex;justify-content:space-between;font-size:.78rem"><span>Confidence ${r.score}/100</span><span style="color:var(--warn)">${r.score<25?"Low":r.score<40?"Low–medium":"Medium"}</span></div>
+    <div class="conf"><div style="width:${r.score}%"></div></div></div>`;
+  const tie=Math.abs(b.mid-w.mid)<.01;
+  document.getElementById("uCards").innerHTML=card("bif",b,pb,!tie&&b.mid>w.mid)+card("whs",w,pw,!tie&&w.mid>b.mid);
+  drawCompare("uChart",US,uEval,pb,pw,.3);
+}
+document.querySelectorAll("#uCamp button").forEach(btn=>btn.onclick=()=>{uCamp=btn.dataset.v;document.querySelectorAll("#uCamp button").forEach(x=>x.setAttribute("aria-pressed",x===btn));renderUC();});
+["uBif","uWhs"].forEach(id=>document.getElementById(id).addEventListener("input",renderUC));
+document.getElementById("uLink").onchange=renderUC;
+renderUC();
 </script>
 </body>
 </html>
