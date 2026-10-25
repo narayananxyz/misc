@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>[hidden]{display:none!important}body{margin:0}img{max-width:100%}</style>
+<title>Elite College Feeder Odds</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+<style>
+/* Layout: single analytical column, summary strip → controls → dumbbell chart → table → calculators → notes */
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --ink:#18202b; --muted:#5d6878; --line:#dde2ea;
+  --pub:#2f6db3; --priv:#9a3b6e; --accent:#2f6db3; --warn:#a46a00; --est-bg:#fbf3e2;
+  --chip:#eef1f6;
+  --f-display:"Source Serif 4", Georgia, serif;
+  --f-body:"IBM Plex Sans", system-ui, -apple-system, Segoe UI, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11161d; --surface:#18202a; --ink:#e6ebf2; --muted:#9aa6b6; --line:#2a3542;
+  --pub:#6ea8ec; --priv:#e07fb2; --accent:#6ea8ec; --warn:#e2b04f; --est-bg:#2a2416; --chip:#222c38; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11161d; --surface:#18202a; --ink:#e6ebf2; --muted:#9aa6b6; --line:#2a3542;
+  --pub:#6ea8ec; --priv:#e07fb2; --accent:#6ea8ec; --warn:#e2b04f; --est-bg:#2a2416; --chip:#222c38; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1040px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:28px}
+h1,h2{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(1.6rem,4vw,2.3rem);line-height:1.15}
+h2{font-size:1.25rem}
+p{margin:0;max-width:68ch}
+.lede{color:var(--muted)}
+.eyebrow{font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:600}
+.mono,.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:12px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px}
+
+/* summary */
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.stat{display:flex;flex-direction:column;gap:4px}
+.stat .big{font-family:var(--f-mono);font-size:1.6rem;font-weight:500;line-height:1.1}
+.stat .sub{color:var(--muted);font-size:.85rem}
+.pubc{color:var(--pub)} .privc{color:var(--priv)}
+
+/* controls */
+.controls{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--surface)}
+.seg button{font:inherit;font-size:.85rem;border:0;background:transparent;color:var(--ink);padding:6px 12px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+label.chk{display:inline-flex;gap:6px;align-items:center;font-size:.85rem}
+select{font:inherit;font-size:.85rem;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)}
+
+/* dumbbell */
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.82rem;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.chart{display:flex;flex-direction:column}
+.crow{display:grid;grid-template-columns:minmax(96px,150px) 1fr 56px;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);cursor:pointer;background:none;border-left:0;border-right:0;border-top:0;font:inherit;color:inherit;text-align:left;width:100%}
+.crow:hover{background:var(--chip)}
+.crow.sel{background:var(--chip)}
+.crow.agg .cname{font-weight:600}
+.cname{font-size:.88rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cname small{color:var(--muted);font-family:var(--f-mono);font-size:.72rem;margin-left:4px}
+.track{position:relative;height:18px}
+.track .grid{position:absolute;top:0;bottom:0;width:1px;background:var(--line)}
+.track .bar{position:absolute;top:8px;height:2px;background:var(--muted);opacity:.5}
+.dot{position:absolute;top:3px;width:12px;height:12px;border-radius:50%;margin-left:-6px}
+.dot.p{background:var(--pub)} .dot.v{background:var(--priv)}
+.rr{font-family:var(--f-mono);font-size:.85rem;text-align:right;font-variant-numeric:tabular-nums}
+.axis{display:grid;grid-template-columns:minmax(96px,150px) 1fr 56px;gap:10px;font-size:.72rem;color:var(--muted);font-family:var(--f-mono)}
+.axis .ticks{position:relative;height:16px}
+.axis .ticks span{position:absolute;transform:translateX(-50%)}
+.flag{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:1px}
+.flag.official{background:var(--muted)} .flag.estimate{background:var(--warn)}
+.detail{font-size:.88rem;display:flex;flex-direction:column;gap:6px}
+.detail .kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px 16px}
+.detail .kv div span{display:block;color:var(--muted);font-size:.75rem}
+
+/* tables */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.85rem;min-width:720px}
+th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;cursor:pointer;user-select:none}
+th[aria-sort]::after{content:" ↓";}
+th[aria-sort="ascending"]::after{content:" ↑";}
+td{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+td:first-child{font-family:var(--f-body)}
+tr.est td{background:var(--est-bg)}
+tr.agg td{font-weight:600;border-top:2px solid var(--ink)}
+td.q{font-family:var(--f-body);text-align:left;color:var(--muted);white-space:normal;min-width:220px;font-size:.8rem}
+
+/* calc */
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.field{display:flex;flex-direction:column;gap:4px;font-size:.85rem}
+.field input[type=number]{font:inherit;font-family:var(--f-mono);padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);width:100%}
+.field input[type=range]{width:100%;accent-color:var(--accent)}
+.field .hint{color:var(--muted);font-size:.78rem}
+.out{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.out div{border-top:2px solid var(--line);padding-top:6px}
+.out div b{display:block;font-family:var(--f-mono);font-size:1.15rem;font-weight:500}
+.out div span{color:var(--muted);font-size:.78rem}
+.decomp{display:flex;height:26px;border-radius:4px;overflow:hidden;font-size:.75rem;font-family:var(--f-mono)}
+.decomp div{display:flex;align-items:center;justify-content:center;color:#fff;white-space:nowrap;overflow:hidden;min-width:0}
+.decomp .a{background:var(--priv)} .decomp .c{background:var(--pub)}
+.notes{font-size:.88rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+.notes ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;max-width:80ch}
+.notes a{color:var(--accent)}
+.footer-src{font-size:.8rem;column-width:280px;column-gap:24px}
+.footer-src a{display:block;color:var(--accent);margin-bottom:3px;break-inside:avoid;word-break:break-word}
+@media (max-width:520px){.crow,.axis{grid-template-columns:92px 1fr 46px;gap:8px}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:8px">
+    <span class="eyebrow">US high-school graduates → elite college enrollment · base-rate adjusted</span>
+    <h1>Elite College Feeder Odds</h1>
+    <p class="lede">Per-graduate probability that a US public vs. private high-school graduate enrolls at each college. Denominators are NCES 2022–23 graduates: about 10.4 public grads for every private grad. Change them below and every number updates.</p>
+  </header>
+
+  <section>
+    <div class="summary" id="summary"></div>
+  </section>
+
+  <section>
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <h2>Per-college probability</h2>
+      <p class="lede" style="font-size:.88rem">Dots show enrollees per 10,000 graduates of each school type. The gap between them is the per-capita advantage; the number on the right is the private:public relative rate. Tap a row for the source and caveats.</p>
+    </div>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="College group" id="grp">
+        <button data-g="ivy" aria-pressed="true">Ivy League</button>
+        <button data-g="non" aria-pressed="false">Top non-Ivy</button>
+        <button data-g="all" aria-pressed="false">Both</button>
+      </div>
+      <label class="chk"><input type="checkbox" id="showEst" checked> Include estimated rows</label>
+      <label class="chk">Sort
+        <select id="sortSel">
+          <option value="rr">Relative rate</option>
+          <option value="pv">P(private)</option>
+          <option value="pp">P(public)</option>
+          <option value="name">Name</option>
+        </select>
+      </label>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--pub)"></i>Public grad, per 10k</span>
+      <span><i style="background:var(--priv)"></i>Private grad, per 10k</span>
+      <span><span class="flag estimate"></span>School-type share is estimated or weak</span>
+    </div>
+    <div class="panel" style="padding:8px 16px">
+      <div class="chart" id="chart"></div>
+      <div class="axis"><span></span><div class="ticks" id="ticks"></div><span style="text-align:right">RR</span></div>
+    </div>
+    <div class="panel detail" id="detail"></div>
+  </section>
+
+  <section>
+    <h2>Full table</h2>
+    <div class="tbl"><table id="tbl"><thead><tr>
+      <th data-k="name">College</th><th data-k="cls">Class</th><th data-k="pub">Public enrollees</th><th data-k="priv">Private enrollees</th>
+      <th data-k="pp">P(pub) /10k</th><th data-k="pv">P(priv) /10k</th><th data-k="oneP">1 in (pub)</th><th data-k="oneV">1 in (priv)</th><th data-k="rr" aria-sort="descending">RR</th><th data-k="or">Odds ratio</th><th>Data quality</th>
+    </tr></thead><tbody></tbody></table></div>
+    <p class="lede" style="font-size:.8rem">Shaded rows rest on an assumed or third-party school-type share. Counts are students from US schools only. Brown and Johns Hopkins apply an admit-pool split to enrolled students.</p>
+  </section>
+
+  <section>
+    <h2>Assumptions you can change</h2>
+    <div class="two">
+      <div class="panel" style="display:flex;flex-direction:column;gap:14px">
+        <div class="field"><label for="dPub">US public high-school graduates</label>
+          <input type="number" id="dPub" value="3425512" step="10000" min="100000">
+          <span class="hint">NCES Digest 2024, Table 219.10 (2022–23). WICHE's 2025 projection is ~3.5–3.57M.</span></div>
+        <div class="field"><label for="dPriv">US private high-school graduates</label>
+          <input type="number" id="dPriv" value="328480" step="5000" min="10000">
+          <span class="hint">NCES 2022–23 actual. WICHE 2025 projection ≈329k.</span></div>
+        <div class="field"><label for="dInd">Independent-school pool: <span class="mono" id="dIndV"></span></label>
+          <input type="range" id="dInd" min="80000" max="140000" step="1000" value="86500">
+          <span class="hint">NCES "nonsectarian" ≈86.5k is too small: many elite schools are Episcopal or Quaker. College Board counted 103,861 independent-school SAT takers in 2016 alone. Religious pool = private total minus this.</span></div>
+        <button id="reset" style="align-self:flex-start;font:inherit;font-size:.85rem;padding:6px 12px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);cursor:pointer">Reset to NCES defaults</button>
+      </div>
+      <div class="panel" style="display:flex;flex-direction:column;gap:12px">
+        <div class="eyebrow">Odds for one graduate</div>
+        <div class="field"><label for="who">High school type</label>
+          <select id="who">
+            <option value="pub">Public (incl. charter, magnet)</option>
+            <option value="ind" selected>Independent / boarding</option>
+            <option value="rel">Religious (Catholic, other)</option>
+            <option value="priv">Private, all types</option>
+          </select></div>
+        <div class="out" id="whoOut"></div>
+        <p class="lede" style="font-size:.8rem">Unconditional rates for an average graduate of that school type. They say nothing about a specific student's chances given grades and scores. Independent/religious split of private seats is assumed: 75/25 at Ivies, 60/40 at the non-Ivies (Notre Dame's Catholic share pulls it toward religious).</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Independent vs. religious schools (Ivies)</h2>
+    <p class="lede" style="font-size:.88rem">The private advantage sits almost entirely in independent and boarding schools. Religious schools run near the public rate. Move the pool slider above to see how sensitive the independent ratio is to the denominator.</p>
+    <div class="tbl"><table id="sub" style="min-width:640px"><thead><tr>
+      <th>College</th><th>Independent enrollees</th><th>Religious enrollees</th><th>Indep. /10k</th><th>Relig. /10k</th><th>Public /10k</th><th>RR indep.</th><th>RR relig.</th>
+    </tr></thead><tbody></tbody></table></div>
+  </section>
+
+  <section>
+    <h2>How much is admissions advantage?</h2>
+    <div class="panel" style="display:flex;flex-direction:column;gap:12px">
+      <p style="font-size:.9rem">Chetty, Deming &amp; Friedman (NBER w31492; <i>QJE</i> 2026) find non-religious private applicants are admitted to Ivy-Plus colleges at about <b>2×</b> the rate of applicants with the same scores and demographics from well-resourced public schools. The rest of the raw gap is pipeline: who applies and who scores high.</p>
+      <div class="field"><label for="cEff">Like-for-like admissions effect: <span class="mono" id="cEffV"></span></label>
+        <input type="range" id="cEff" min="1" max="3" step="0.1" value="2"></div>
+      <div class="decomp" id="decomp"></div>
+      <p class="lede" style="font-size:.82rem" id="decompTxt"></p>
+      <p class="lede" style="font-size:.82rem">Score-pool check: about 3.6% of public SAT takers vs. 10–14% of private takers score 1400+, so private students are roughly 37–44% of the 1400+/1500+ pool, close to their ~39% share of Ivy seats. Conditional on scores alone, all-private vs. all-public is roughly 0.8–1.2×.</p>
+    </div>
+  </section>
+
+  <section class="notes">
+    <h2 style="color:var(--ink)">Gaps and caveats</h2>
+    <ul>
+      <li><b>No usable split:</b> Rice, Caltech, Carnegie Mellon, Emory, Georgetown (current), Michigan, UVA, UNC and the rest of the top 50. Peers suggest private elites run ~5–8×; Catholic universities higher.</li>
+      <li><b>UC Berkeley and UCLA:</b> a 2023 San Francisco Chronicle analysis of 2022 statewide UC data shows public and private applicants admitted at similar rates. Derived per-graduate enrollment ratio ≈1.3–1.5× for California residents. Other flagships with in-state mandates likely sit in a similar low range.</li>
+      <li><b>Year mismatch:</b> classes run from 2022 (Notre Dame) to 2030 (Yale, WashU); all use 2022–23 denominators. Swapping in 2025 projections moves every ratio by ~3–4%.</li>
+      <li><b>Charter and magnet schools count as public</b>, which pads the public numerator with selective schools such as Boston Latin and Thomas Jefferson.</li>
+      <li><b>Surveys:</b> Harvard, UChicago and Northwestern shares come from voluntary surveys with roughly 33–61% response.</li>
+      <li><b>Odds ratio vs. relative rate:</b> with probabilities under 2% they differ by under 2%.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Sources</h2>
+    <div class="footer-src">
+      <a href="https://nces.ed.gov/programs/digest/d24/tables/dt24_219.10.asp?current=yes" target="_blank" rel="noopener">NCES Digest 2024, Table 219.10</a>
+      <a href="https://nces.ed.gov/surveys/pss/tables/TABLE13fl2122.asp" target="_blank" rel="noopener">NCES Private School Survey 2021–22, Table 13</a>
+      <a href="https://www.highereddive.com/news/high-school-graduates-to-peak-in-2025-with-slightly-deeper-than-expected-d/735175/" target="_blank" rel="noopener">WICHE projection coverage (Higher Ed Dive)</a>
+      <a href="https://news.yale.edu/sites/default/files/2026-09/Yale_ClassProfile2030Web.pdf" target="_blank" rel="noopener">Yale Class of 2030 profile</a>
+      <a href="https://admission.princeton.edu/apply/admission-statistics" target="_blank" rel="noopener">Princeton admission statistics</a>
+      <a href="https://www.brown.edu/news/2025-03-27/admitted" target="_blank" rel="noopener">Brown Class of 2029 admits</a>
+      <a href="https://www.collegetransitions.com/blog/how-to-get-into-dartmouth-admissions-data-and-strategies/" target="_blank" rel="noopener">Dartmouth 2028 (College Transitions)</a>
+      <a href="https://irp.cornell.edu/wp-content/uploads/2021/10/Profile2021-first-year.pdf" target="_blank" rel="noopener">Cornell IRP first-year profile</a>
+      <a href="https://features.thecrimson.com/2017/freshman-survey/makeup-narrative/" target="_blank" rel="noopener">Harvard Crimson freshman survey</a>
+      <a href="https://www.columbiaspectator.com/news/2025/09/08/columbia-admits-largest-class-in-university-history-amid-admissions-reform/" target="_blank" rel="noopener">Columbia Spectator, Class of 2029</a>
+      <a href="https://www.thedp.com/article/2025/09/penn-admissions-2029-data-analysis" target="_blank" rel="noopener">Daily Pennsylvanian, Class of 2029</a>
+      <a href="https://www.ivycoach.com/the-ivy-coach-blog/college-admissions/mit-student-demographics/" target="_blank" rel="noopener">MIT demographics (Ivy Coach)</a>
+      <a href="https://facts.stanford.edu/academics/undergraduate-education/class-2029-profile" target="_blank" rel="noopener">Stanford Class of 2029 profile</a>
+      <a href="https://admissions.washu.edu/life-at-washu/incoming-class-profile/" target="_blank" rel="noopener">WashU incoming class profile</a>
+      <a href="https://hub.jhu.edu/2025/03/21/johns-hopkins-class-of-2029-regular-decision" target="_blank" rel="noopener">Johns Hopkins Class of 2029</a>
+      <a href="https://admissions.duke.edu/what-we-look-for/" target="_blank" rel="noopener">Duke admissions</a>
+      <a href="https://news.nd.edu/news/class-of-2022-intellectually-and-globally-diverse-dedicated-to-service-and-leadership/" target="_blank" rel="noopener">Notre Dame Class of 2022</a>
+      <a href="https://chicagomaroon.com/25254/news/class-2021-numbers/" target="_blank" rel="noopener">Chicago Maroon, Class of 2021</a>
+      <a href="https://www.northwestern.edu/provost/about/ir/surveys/highlights/2024-northwestern-survey-of-new-students-highlights-report.pdf" target="_blank" rel="noopener">Northwestern Survey of New Students 2024</a>
+      <a href="https://reports.collegeboard.org/media/pdf/2016-total-group-sat-suite-assessments-annual-report.pdf" target="_blank" rel="noopener">College Board 2016 SAT report</a>
+      <a href="https://www.nber.org/papers/w31492" target="_blank" rel="noopener">Chetty, Deming &amp; Friedman, NBER w31492</a>
+      <a href="https://www.universityofcalifornia.edu/about-uc/information-center/admissions-source-school" target="_blank" rel="noopener">UC Information Center, admissions by source school</a>
+    </div>
+  </section>
+</div>
+
+<script>
+const DEF={pub:3425512,priv:328480,ind:86500};
+const D={...DEF};
+// q: "official" | "estimate"
+const ROWS=[
+ {name:"Yale",g:"ivy",cls:"2030",pub:1016,priv:456,q:"official",note:"Official class profile: 69% public of 1,472 students from US schools (1,652 class, 180 from non-US schools). The Yale Daily News survey of this class found a lower 64.3% public."},
+ {name:"Princeton",g:"ivy",cls:"2029",pub:784,priv:444,q:"official",note:"Official: 63.3% public, 17.3% independent day, 11.1% religious, 7.5% boarding. About 1,238 US-school students (1,408 minus 12.1% international). Class of 2030 is 62.2% public."},
+ {name:"Harvard",g:"ivy",cls:"2029",pub:892,priv:502,q:"estimate",note:"Harvard publishes no split. Crimson freshman-survey shares (63.5% public incl. charter, 35.7% private) applied to ~1,405 domestic students (1,654 matriculated minus ~15% international)."},
+ {name:"Columbia",g:"ivy",cls:"2029",pub:890,priv:645,q:"estimate",note:"No published split. Assumes 58% public (range 55–62%) of ~1,535 US-school students out of 1,806. RR range 6.4–8.5."},
+ {name:"Penn",g:"ivy",cls:"2029",pub:1210,priv:895,q:"estimate",note:"No published split. Assumes 57.5% public (range 55–60%) of ~2,105 US-school students out of 2,421. RR range 7.0–8.5."},
+ {name:"Brown",g:"ivy",cls:"2029",pub:896,priv:604,q:"estimate",note:"Official admit split (59.7% public, 30.4% private, 9.5% religious of 2,418 admits) applied to ~1,500 US-school enrollees. Early-decision admits were only ~52% public."},
+ {name:"Dartmouth",g:"ivy",cls:"2028",pub:588,priv:462,q:"official",note:"56% public, 39% independent, 5% religious (via College Transitions, citing Dartmouth). ~1,050 US-school count assumed. Class of 2029 admits also 56% public."},
+ {name:"Cornell",g:"ivy",cls:"2025",pub:2049,priv:1251,q:"official",note:"Official IRP profile: 62.1% public; ~3,300 US-school count assumed. Older class, but Cornell has sat at 62–64% public for six years."},
+ {name:"MIT",g:"non",cls:"2029",pub:734,priv:249,q:"official",note:"68% public, 15% independent, 8% religious, 9% foreign school (Ivy Coach citing MIT). ~1,080 class. Lowest private skew among the elites with data."},
+ {name:"Stanford",g:"non",cls:"2029",pub:1082,priv:522,q:"official",note:"Official Stanford Facts: 58% public, 28% private, 14% international of 1,866."},
+ {name:"WashU",g:"non",cls:"2030",pub:928,priv:656,q:"official",note:"Official class profile: 58% public, 41% private. ~1,600 US-school count assumed."},
+ {name:"Johns Hopkins",g:"non",cls:"2029",pub:702,priv:448,q:"estimate",note:"~61% public from admit-round releases (ED I, ED II, RD), applied to ~1,150 estimated US enrollees."},
+ {name:"Duke",g:"non",cls:"2027",pub:914,priv:661,q:"official",note:"58% public/charter (Duke admissions page); remainder assumed private. ~1,575 US count. Older class."},
+ {name:"Notre Dame",g:"non",cls:"2022",pub:849,priv:1080,q:"official",note:"44% public, 18% private/charter, 38% Catholic (official, 2022). Catholic-school RR alone ≈22×. Old data."},
+ {name:"UChicago",g:"non",cls:"2021",pub:816,priv:590,q:"estimate",note:"Chicago Maroon survey (~1/3 response): 55.3% public, 40% private, applied to ~1,475 US-school students. Old class."},
+ {name:"Northwestern",g:"non",cls:"2028",pub:1080,priv:750,q:"estimate",note:"NU's 2024 new-student survey reports only 'traditional public' (46%). Total public assumed ≈59% of ~1,830 domestic."},
+ {name:"Vanderbilt",g:"non",cls:"n/a",pub:928,priv:522,q:"estimate",note:"Weak: '64% public' from College Transitions, year unstated. Class size from ~1,621 target."},
+];
+// subtype rows (Ivy): independent+boarding, religious, public
+const SUB=[
+ {name:"Yale 2030",ind:368,rel:88,pub:1016},
+ {name:"Princeton 2029",ind:307,rel:137,pub:784},
+ {name:"Harvard (survey)",ind:365,rel:140,pub:892},
+ {name:"Brown 2029 admits",ind:735,rel:230,pub:1444},
+ {name:"Dartmouth 2028",ind:410,rel:52,pub:588},
+];
+let group="ivy", showEst=true, sortK="rr", tSort={k:"rr",dir:-1}, selName=null;
+
+const per10k=(n,d)=>n/d*1e4;
+const fmt=(x,dp=1)=>x.toLocaleString(undefined,{minimumFractionDigits:dp,maximumFractionDigits:dp});
+const int=x=>Math.round(x).toLocaleString();
+function calc(r){
+  const p0=r.pub/D.pub, p1=r.priv/D.priv;
+  return {...r,pp:p0*1e4,pv:p1*1e4,oneP:1/p0,oneV:1/p1,rr:p1/p0,or:(p1*(1-p0))/(p0*(1-p1))};
+}
+function agg(name,g,rows){
+  const pub=rows.reduce((a,r)=>a+r.pub,0), priv=rows.reduce((a,r)=>a+r.priv,0);
+  return calc({name,g,cls:"—",pub,priv,q:"agg",agg:true,note:`Sum of ${rows.length} colleges. Assumes no student enrolls at two (true for enrollment). Probabilities are "any of these colleges".`});
+}
+function visible(){
+  let r=ROWS.filter(x=>(group==="all"||x.g===group)&&(showEst||x.q==="official")).map(calc);
+  return r;
+}
+function sorted(arr,k,dir){
+  return arr.slice().sort((a,b)=>k==="name"?a.name.localeCompare(b.name)*dir:k==="cls"?String(a.cls).localeCompare(String(b.cls))*dir:(a[k]-b[k])*dir);
+}
+
+function renderSummary(){
+  const ivy=agg("Any Ivy","ivy",ROWS.filter(r=>r.g==="ivy"));
+  const non=agg("Any top non-Ivy","non",ROWS.filter(r=>r.g==="non"));
+  const indPool=D.ind, ivyInd=ivy.priv*0.75;
+  const pInd=ivyInd/indPool;
+  document.getElementById("summary").innerHTML=`
+   <div class="panel stat"><span class="eyebrow">Any Ivy · public grad</span><span class="big pubc">1 in ${int(ivy.oneP)}</span><span class="sub">${fmt(ivy.pp)} per 10k · ${int(ivy.pub)} seats</span></div>
+   <div class="panel stat"><span class="eyebrow">Any Ivy · private grad</span><span class="big privc">1 in ${int(ivy.oneV)}</span><span class="sub">${fmt(ivy.pv)} per 10k · ${int(ivy.priv)} seats</span></div>
+   <div class="panel stat"><span class="eyebrow">Ivy relative rate</span><span class="big">${fmt(ivy.rr)}×</span><span class="sub">Independent/boarding only ≈ ${fmt(pInd/(ivy.pub/D.pub),0)}× (1 in ${int(1/pInd)})</span></div>
+   <div class="panel stat"><span class="eyebrow">Top non-Ivy relative rate</span><span class="big">${fmt(non.rr)}×</span><span class="sub">1 in ${int(non.oneP)} public vs. 1 in ${int(non.oneV)} private · 9 schools</span></div>`;
+}
+
+function renderChart(){
+  let rows=sorted(visible(),sortK,sortK==="name"?1:-1);
+  const groups=group==="all"?["ivy","non"]:[group];
+  const aggs=groups.map(g=>agg(g==="ivy"?"Any Ivy":"Any top non-Ivy",g,ROWS.filter(r=>r.g===g&&(showEst||r.q==="official")))).filter(a=>a.pub>0);
+  const all=rows.concat(aggs);
+  const maxV=Math.max(...rows.map(r=>r.pv),1);
+  const top=Math.ceil(maxV/10)*10;
+  const ticks=[]; for(let t=0;t<=top;t+=10) ticks.push(t);
+  const pct=v=>Math.min(v/top*100,100);
+  const grid=ticks.map(t=>`<span class="grid" style="left:${pct(t)}%"></span>`).join("");
+  const row=(r,isAgg)=>`<button class="crow${isAgg?" agg":""}${selName===r.name?" sel":""}" data-n="${r.name}" aria-label="${r.name} details">
+    <span class="cname"><span class="flag ${r.q==="estimate"?"estimate":"official"}" ${isAgg?'style="visibility:hidden"':''}></span>${r.name}<small>${isAgg?"":"’"+String(r.cls).slice(-2)}</small></span>
+    <span class="track">${grid}${isAgg?"":`<span class="bar" style="left:${pct(r.pp)}%;width:${pct(r.pv)-pct(r.pp)}%"></span><span class="dot p" style="left:${pct(r.pp)}%"></span><span class="dot v" style="left:${pct(r.pv)}%"></span>`}${isAgg?`<span style="position:absolute;inset:0;display:flex;align-items:center;font-family:var(--f-mono);font-size:.78rem;color:var(--muted)">${fmt(r.pp)} vs ${fmt(r.pv)} /10k combined</span>`:""}</span>
+    <span class="rr">${fmt(r.rr)}×</span></button>`;
+  document.getElementById("chart").innerHTML=rows.map(r=>row(r,false)).join("")+aggs.map(a=>row(a,true)).join("");
+  document.getElementById("ticks").innerHTML=ticks.map(t=>`<span style="left:${pct(t)}%">${t}</span>`).join("");
+  document.querySelectorAll(".crow").forEach(b=>b.onclick=()=>{selName=b.dataset.n;renderChart();});
+  const sel=all.find(r=>r.name===selName)||all[0];
+  if(sel) renderDetail(sel);
+}
+function renderDetail(r){
+  document.getElementById("detail").innerHTML=`
+   <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline"><b style="font-size:1rem">${r.name}${r.agg?"":" · Class of "+r.cls}</b>
+   <span class="eyebrow" style="color:${r.q==="estimate"?"var(--warn)":"var(--muted)"}">${r.agg?"Aggregate":r.q==="estimate"?"Estimated share":"Published share"}</span></div>
+   <div class="kv">
+    <div><span>Public enrollees</span><b class="num pubc">${int(r.pub)}</b></div>
+    <div><span>Private enrollees</span><b class="num privc">${int(r.priv)}</b></div>
+    <div><span>Public grad odds</span><b class="num">1 in ${int(r.oneP)}</b></div>
+    <div><span>Private grad odds</span><b class="num">1 in ${int(r.oneV)}</b></div>
+    <div><span>Relative rate / odds ratio</span><b class="num">${fmt(r.rr,2)}× / ${fmt(r.or,2)}×</b></div>
+   </div>
+   <p style="color:var(--muted)">${r.note}</p>`;
+}
+
+function renderTable(){
+  const rows=sorted(visible(),tSort.k,tSort.dir);
+  const groups=group==="all"?["ivy","non"]:[group];
+  const aggs=groups.map(g=>agg(g==="ivy"?"Any Ivy":"Any top non-Ivy",g,ROWS.filter(r=>r.g===g&&(showEst||r.q==="official")))).filter(a=>a.pub>0);
+  if(group==="all"){const both=agg("Ivy + top non-Ivy","all",ROWS.filter(r=>showEst||r.q==="official"));aggs.push(both);}
+  const tr=(r)=>`<tr class="${r.agg?"agg":r.q==="estimate"?"est":""}"><td>${r.name}</td><td>${r.cls}</td><td>${int(r.pub)}</td><td>${int(r.priv)}</td><td>${fmt(r.pp,2)}</td><td>${fmt(r.pv,1)}</td><td>${int(r.oneP)}</td><td>${int(r.oneV)}</td><td>${fmt(r.rr)}×</td><td>${fmt(r.or)}×</td><td class="q">${r.agg?"Sum":r.q==="estimate"?"Estimated share":"Published share"}</td></tr>`;
+  document.querySelector("#tbl tbody").innerHTML=rows.map(tr).join("")+aggs.map(tr).join("");
+  document.querySelectorAll("#tbl th[data-k]").forEach(th=>{
+    if(th.dataset.k===tSort.k) th.setAttribute("aria-sort",tSort.dir>0?"ascending":"descending"); else th.removeAttribute("aria-sort");
+  });
+}
+function renderSub(){
+  const rel=D.priv-D.ind;
+  const ivy=agg("x","ivy",ROWS.filter(r=>r.g==="ivy"));
+  const all=SUB.concat([{name:"Ivy aggregate (75/25 split)",ind:ivy.priv*.75,rel:ivy.priv*.25,pub:ivy.pub,agg:true}]);
+  document.querySelector("#sub tbody").innerHTML=all.map(s=>{
+    const pi=per10k(s.ind,D.ind), pr=per10k(s.rel,rel), pp=per10k(s.pub,D.pub);
+    return `<tr class="${s.agg?"agg":""}"><td>${s.name}</td><td>${int(s.ind)}</td><td>${int(s.rel)}</td><td>${fmt(pi)}</td><td>${fmt(pr)}</td><td>${fmt(pp,2)}</td><td>${fmt(pi/pp)}×</td><td>${fmt(pr/pp)}×</td></tr>`;
+  }).join("");
+  document.getElementById("dIndV").textContent=int(D.ind)+" grads";
+}
+function renderWho(){
+  const who=document.getElementById("who").value;
+  const rel=D.priv-D.ind;
+  const out=[];
+  ["ivy","non"].forEach(g=>{
+    const a=agg("",g,ROWS.filter(r=>r.g===g));
+    let n,d;
+    if(who==="pub"){n=a.pub;d=D.pub}
+    else if(who==="priv"){n=a.priv;d=D.priv}
+    else if(who==="ind"){n=a.priv*(g==="ivy"?.75:.6);d=D.ind}
+    else {n=a.priv*(g==="ivy"?.25:.4);d=rel}
+    out.push({g,p:n/d,rr:(n/d)/(a.pub/D.pub)});
+  });
+  const both=out[0].p+out[1].p;
+  document.getElementById("whoOut").innerHTML=`
+   <div><b>1 in ${int(1/out[0].p)}</b><span>Any Ivy · ${fmt(out[0].p*100,2)}%</span></div>
+   <div><b>1 in ${int(1/out[1].p)}</b><span>Any of 9 top non-Ivies</span></div>
+   <div><b>1 in ${int(1/both)}</b><span>Any of the 17 combined</span></div>
+   <div><b>${fmt(out[0].rr)}×</b><span>vs. public grad (Ivy)</span></div>`;
+}
+function renderDecomp(){
+  const c=+document.getElementById("cEff").value;
+  const ivy=agg("x","ivy",ROWS.filter(r=>r.g==="ivy"));
+  const rrInd=(ivy.priv*.75/D.ind)/(ivy.pub/D.pub);
+  const comp=rrInd/c;
+  const lc=Math.log(c), lt=Math.log(rrInd);
+  const wa=Math.max(lc/lt*100,8);
+  document.getElementById("cEffV").textContent=fmt(c)+"×";
+  document.getElementById("decomp").innerHTML=`<div class="a" style="width:${wa}%">admissions ${fmt(c)}×</div><div class="c" style="width:${100-wa}%">pipeline ${fmt(comp)}×</div>`;
+  document.getElementById("decompTxt").textContent=`Independent-school raw RR at Ivies ≈ ${fmt(rrInd)}× with the current pool. Split multiplicatively: ${fmt(c)}× from how the file is read, ${fmt(comp)}× from income, scores and application rates. Bar widths are on a log scale.`;
+}
+function renderAll(){renderSummary();renderChart();renderTable();renderSub();renderWho();renderDecomp();}
+
+document.querySelectorAll("#grp button").forEach(b=>b.onclick=()=>{
+  group=b.dataset.g;selName=null;
+  document.querySelectorAll("#grp button").forEach(x=>x.setAttribute("aria-pressed",x===b));
+  renderChart();renderTable();
+});
+document.getElementById("showEst").onchange=e=>{showEst=e.target.checked;selName=null;renderChart();renderTable();};
+document.getElementById("sortSel").onchange=e=>{sortK=e.target.value;renderChart();};
+document.querySelectorAll("#tbl th[data-k]").forEach(th=>th.onclick=()=>{
+  const k=th.dataset.k; tSort={k,dir:tSort.k===k?-tSort.dir:(k==="name"||k==="cls"?1:-1)}; renderTable();
+});
+const bind=(id,key)=>document.getElementById(id).addEventListener("input",e=>{const v=+e.target.value;if(v>0){D[key]=v;if(D.ind>=D.priv)D.ind=Math.round(D.priv*.9);renderAll();}});
+bind("dPub","pub");bind("dPriv","priv");bind("dInd","ind");
+document.getElementById("who").onchange=renderWho;
+document.getElementById("cEff").oninput=renderDecomp;
+document.getElementById("reset").onclick=()=>{Object.assign(D,DEF);document.getElementById("dPub").value=DEF.pub;document.getElementById("dPriv").value=DEF.priv;document.getElementById("dInd").value=DEF.ind;renderAll();};
+renderAll();
+</script>
+</body>
+</html>
