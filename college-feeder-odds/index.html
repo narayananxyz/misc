@@ -111,6 +111,16 @@ td.q{font-family:var(--f-body);text-align:left;color:var(--muted);white-space:no
 .notes a{color:var(--accent)}
 .footer-src{font-size:.8rem;column-width:280px;column-gap:24px}
 .footer-src a{display:block;color:var(--accent);margin-bottom:3px;break-inside:avoid;word-break:break-word}
+td.e{color:var(--warn)}
+#fremont td{white-space:normal}
+.fcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.fcard{border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.fcard.win{border-color:var(--ink)}
+.fcard .big{font-family:var(--f-mono);font-size:1.7rem;line-height:1.1}
+.fcard .sub{color:var(--muted);font-size:.8rem}
+.conf{height:6px;background:var(--chip);border-radius:3px;overflow:hidden}
+.conf div{height:100%;background:var(--warn)}
+input:disabled{opacity:.5}
 @media (max-width:520px){.crow,.axis{grid-template-columns:92px 1fr 46px;gap:8px}}
 </style>
 </head>
@@ -205,6 +215,58 @@ td.q{font-family:var(--f-body);text-align:left;color:var(--muted);white-space:no
     <div class="tbl"><table id="sub" style="min-width:640px"><thead><tr>
       <th>College</th><th>Independent enrollees</th><th>Religious enrollees</th><th>Indep. /10k</th><th>Relig. /10k</th><th>Public /10k</th><th>RR indep.</th><th>RR relig.</th>
     </tr></thead><tbody></tbody></table></div>
+  </section>
+
+  <section id="fremont">
+    <span class="eyebrow">Fremont, CA · same student, two schools</span>
+    <h2>BASIS Independent Fremont vs. Washington High</h2>
+    <p class="lede" style="font-size:.88rem">Assumes a top SAT score (about 1500+) either way: a student at BASIS Independent Fremont (BIF) through 8th grade who either stays or moves to Washington High (WHS). The score is a given in both cases, so what changes is where the student stands in the class, and admissions read students against their own school.</p>
+    <div class="tbl"><table style="min-width:600px"><thead><tr><th>Metric</th><th>BIF</th><th>Washington HS</th></tr></thead><tbody>
+      <tr><td>Seniors per year</td><td>45–50 (first class 2024)</td><td>445–471</td></tr>
+      <tr><td>SAT</td><td>mean 1487–1492; median 1520 (’24)</td><td>not published</td></tr>
+      <tr><td>Any top-50 acceptance, share of class</td><td>92–95% (school-published)</td><td class="e">25–35% (est.)</td></tr>
+      <tr><td>Ivy / Stanford / MIT acceptance per grad</td><td class="e">15–25% (est.)</td><td class="e">1.5–3% (est.)</td></tr>
+      <tr><td>Ivy + Stanford enrollment per grad</td><td class="e">6–12% (est.)</td><td>≈0.9% (4 of 445, Class of ’24)</td></tr>
+      <tr><td>UC Berkeley admits per senior</td><td>not retrieved</td><td>≈2.8% (13 of 142 applicants, fall ’25)</td></tr>
+      <tr><td>Attend college</td><td>100%</td><td>82% (40% of those at community college)</td></tr>
+      <tr><td>Tuition</td><td>≈$37k/yr</td><td>public</td></tr>
+    </tbody></table></div>
+    <p class="lede" style="font-size:.78rem">Orange cells are estimates. BIF publishes acceptances (the union across students), not per-college counts or enrollments. WHS figures come from the student paper's senior edition and UC source-school data. National baseline for comparison: 0.24% (public) and 1.6% (private) any-Ivy enrollment.</p>
+
+    <div class="panel" style="display:flex;flex-direction:column;gap:14px">
+      <div class="controls">
+        <div class="seg" role="group" aria-label="Outcome" id="fOut">
+          <button data-v="ivy" aria-pressed="true">Ivy / Stanford / MIT</button>
+          <button data-v="t50" aria-pressed="false">Any top-50</button>
+        </div>
+        <div class="seg" role="group" aria-label="Measure" id="fMeas">
+          <button data-v="acc" aria-pressed="true">Acceptance</button>
+          <button data-v="enr" aria-pressed="false">Enrollment</button>
+        </div>
+        <label class="chk"><input type="checkbox" id="fLink" checked> Same student (map BIF rank to WHS rank)</label>
+      </div>
+      <div class="two">
+        <div class="field"><label for="fBif">Percentile in BIF class: <span class="mono" id="fBifV"></span></label>
+          <input type="range" id="fBif" min="0" max="99" step="1" value="60">
+          <span class="hint">A 1520 SAT is BIF's median. One student is about 2 percentile points of a 48-student class.</span></div>
+        <div class="field"><label for="fWhs">Percentile in WHS class: <span class="mono" id="fWhsV"></span></label>
+          <input type="range" id="fWhs" min="0" max="99.5" step="0.5" value="96">
+          <span class="hint" id="fWhsHint"></span></div>
+      </div>
+      <div class="fcards" id="fCards"></div>
+      <div style="overflow-x:auto"><svg id="fChart" viewBox="0 0 640 250" role="img" aria-label="Odds by percentile for both schools" style="width:100%;min-width:420px;height:auto;display:block"></svg></div>
+      <div class="legend"><span><i style="background:var(--priv)"></i>BIF</span><span><i style="background:var(--pub)"></i>Washington HS</span><span>Shaded band = range from low to high school-rate estimate</span></div>
+    </div>
+    <div class="notes">
+      <ul>
+        <li><b>Percentile</b> means standing by GPA and course rigor. Neither school publishes a rank.</li>
+        <li><b>Same-student mapping (assumption):</b> a BIF-prepared top scorer lands in WHS's top 10% × (1 − BIF percentile), floored at the top 0.5%. BIF median maps to WHS top 5%; BIF top quarter to WHS top 2.5%. Untick the box to set WHS rank yourself.</li>
+        <li><b>Curves:</b> P = A·σ((p − p₀)/w). Ceiling A and steepness w are calibrated so ~95% of elite admits come from the top tenth (Common Data Set C10: 93–97% of Ivy enrollees reporting rank). The midpoint p₀ is solved so the class average equals the school's total rate. Calibrated, not fitted.</li>
+        <li><b>Enrollment</b> = acceptance × yield (0.45 BIF, 0.50 WHS).</li>
+        <li><b>Confidence score (0–100):</b> 100 × (1 − band width ÷ (low + high)), capped by data quality: 45 for BIF (3 classes, no per-college counts), 50 for WHS (one year of self-reported destinations, n = 4). Nothing here can score above Medium.</li>
+        <li><b>Selection effect:</b> BIF admits by entrance exam. Its high rate reflects who enrolls as much as what the school adds, and legacy, athletics and essays are not modeled.</li>
+      </ul>
+    </div>
   </section>
 
   <section>
@@ -428,6 +490,83 @@ document.getElementById("who").onchange=renderWho;
 document.getElementById("cEff").oninput=renderDecomp;
 document.getElementById("reset").onclick=()=>{Object.assign(D,DEF);document.getElementById("dPub").value=DEF.pub;document.getElementById("dPriv").value=DEF.priv;document.getElementById("dInd").value=DEF.ind;renderAll();};
 renderAll();
+
+// ---- Fremont section ----
+const FS={
+ bif:{name:"BIF",color:"var(--priv)",yield:.45,ceil:45,
+   ivy:{R:[.15,.20,.25],A:.75,w:.05}, t50:{R:[.88,.93,.96],A:.99,w:.10}},
+ whs:{name:"Washington HS",color:"var(--pub)",yield:.50,ceil:50,
+   ivy:{R:[.015,.02,.03],A:.45,w:.015}, t50:{R:[.25,.30,.35],A:.95,w:.08}}
+};
+let fOut="ivy", fMeas="acc";
+const sig=x=>1/(1+Math.exp(-x));
+const cache={};
+function curve(R,A,w){
+  const key=R+"|"+A+"|"+w; if(cache[key]) return cache[key];
+  const N=400, mean=p0=>{let s=0;for(let i=0;i<N;i++){const p=(i+.5)/N;s+=A*sig((p-p0)/w);}return s/N;};
+  let lo=-2,hi=3;
+  for(let k=0;k<60;k++){const m=(lo+hi)/2; if(mean(m)>R) lo=m; else hi=m;}
+  const p0=(lo+hi)/2;
+  return cache[key]=p=>A*sig((p-p0)/w);
+}
+function fEval(s,p){
+  const c=FS[s][fOut], y=fMeas==="enr"?FS[s].yield:1;
+  const v=c.R.map(R=>curve(R,c.A,c.w)(p)*y);
+  const lo=Math.min(v[0],v[2]), hi=Math.max(v[0],v[2]);
+  const score=Math.max(0,Math.min(FS[s].ceil,Math.round(100*(1-(hi-lo)/(hi+lo+1e-9)))));
+  return {mid:v[1],lo,hi,score};
+}
+const pctTxt=x=>x>=.1?fmt(x*100,0)+"%":x>=.001?fmt(x*100,1)+"%":"<0.1%";
+const confLbl=s=>s<25?"Low":s<40?"Low–medium":"Medium";
+function mapWhs(pb){return 1-Math.max(.005,.10*(1-pb));}
+function renderFremont(){
+  const link=document.getElementById("fLink").checked;
+  const bEl=document.getElementById("fBif"), wEl=document.getElementById("fWhs");
+  const pb=+bEl.value/100;
+  if(link) wEl.value=Math.min(99.5,Math.round(mapWhs(pb)*200)/2);
+  wEl.disabled=link;
+  const pw=+wEl.value/100;
+  document.getElementById("fBifV").textContent=fmt(pb*100,0)+"th · top "+fmt((1-pb)*100,0)+"%";
+  document.getElementById("fWhsV").textContent=fmt(pw*100,1)+"th · top "+fmt((1-pw)*100,1)+"%";
+  document.getElementById("fWhsHint").textContent=link?"Set by the same-student mapping. Untick the box to move it yourself.":"Set manually.";
+  const b=fEval("bif",pb), w=fEval("whs",pw);
+  const lab=(fOut==="ivy"?"Ivy / Stanford / MIT":"any top-50")+" "+(fMeas==="acc"?"acceptance":"enrollment");
+  const card=(s,r,p,win)=>`<div class="fcard${win?" win":""}">
+    <span class="eyebrow" style="color:${FS[s].color}">${FS[s].name} · ${fmt(p*100,s==="whs"?1:0)}th percentile${win?" · higher":""}</span>
+    <span class="big">${pctTxt(r.mid)}</span>
+    <span class="sub">${lab} · range ${pctTxt(r.lo)}–${pctTxt(r.hi)}</span>
+    <div style="display:flex;justify-content:space-between;font-size:.78rem"><span>Confidence ${r.score}/100</span><span style="color:var(--warn)">${confLbl(r.score)}</span></div>
+    <div class="conf"><div style="width:${r.score}%"></div></div></div>`;
+  const tie=Math.abs(b.mid-w.mid)<.01;
+  document.getElementById("fCards").innerHTML=card("bif",b,pb,!tie&&b.mid>w.mid)+card("whs",w,pw,!tie&&w.mid>b.mid);
+  drawFChart(pb,pw);
+}
+function drawFChart(pb,pw){
+  const W=640,H=250,L=44,R=14,T=14,B=36,x0=fOut==="ivy"?.5:0;
+  const X=p=>L+(p-x0)/(1-x0)*(W-L-R);
+  let ymax=0;const pts={};
+  ["bif","whs"].forEach(s=>{pts[s]=[];for(let i=0;i<=200;i++){const p=x0+(1-x0)*i/200;const r=fEval(s,Math.min(p,.999));pts[s].push([p,r]);ymax=Math.max(ymax,r.hi);}});
+  ymax=Math.max(.1,Math.ceil(ymax*10)/10);
+  const Y=v=>T+(1-v/ymax)*(H-T-B);
+  let g="";
+  for(let k=0;k<=4;k++){const v=ymax*k/4;g+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${Y(v)+4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="IBM Plex Mono,monospace">${fmt(v*100,0)}%</text>`;}
+  const xt=fOut==="ivy"?[.5,.6,.7,.8,.9,1]:[0,.2,.4,.6,.8,1];
+  xt.forEach(t=>g+=`<text x="${X(t)}" y="${H-B+16}" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="IBM Plex Mono,monospace">${fmt(t*100,0)}</text>`);
+  g+=`<text x="${(L+W-R)/2}" y="${H-4}" text-anchor="middle" font-size="11" fill="var(--muted)">Percentile within own class</text>`;
+  ["whs","bif"].forEach(s=>{
+    const P=pts[s], c=FS[s].color;
+    const band=P.map(([p,r])=>`${X(p)},${Y(r.hi)}`).join(" ")+" "+P.slice().reverse().map(([p,r])=>`${X(p)},${Y(r.lo)}`).join(" ");
+    g+=`<polygon points="${band}" fill="${c}" fill-opacity=".15" stroke="none"/>`;
+    g+=`<polyline points="${P.map(([p,r])=>`${X(p)},${Y(r.mid)}`).join(" ")}" fill="none" stroke="${c}" stroke-width="2.2"/>`;
+  });
+  [["bif",pb],["whs",pw]].forEach(([s,p])=>{if(p<x0)return;const r=fEval(s,p);g+=`<line x1="${X(p)}" x2="${X(p)}" y1="${T}" y2="${H-B}" stroke="${FS[s].color}" stroke-dasharray="3 3" stroke-opacity=".6"/><circle cx="${X(p)}" cy="${Y(r.mid)}" r="5.5" fill="${FS[s].color}" stroke="var(--surface)" stroke-width="2"/>`;});
+  document.getElementById("fChart").innerHTML=g;
+}
+const segBind=(id,set)=>document.querySelectorAll("#"+id+" button").forEach(btn=>btn.onclick=()=>{set(btn.dataset.v);document.querySelectorAll("#"+id+" button").forEach(x=>x.setAttribute("aria-pressed",x===btn));renderFremont();});
+segBind("fOut",v=>fOut=v);segBind("fMeas",v=>fMeas=v);
+["fBif","fWhs"].forEach(id=>document.getElementById(id).addEventListener("input",renderFremont));
+document.getElementById("fLink").onchange=renderFremont;
+renderFremont();
 </script>
 </body>
 </html>
